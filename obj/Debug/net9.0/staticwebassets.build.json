@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "R3cALmezPmRL++Dg3To1kVMVpcNxTb+ZSsAX11DN8JU=",
+  "Source": "bookStream",
+  "BasePath": "_content/bookStream",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
