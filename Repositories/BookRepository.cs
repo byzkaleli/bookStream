@@ -57,11 +57,6 @@ namespace bookStream.Repositories
         {
             var existingBook = await _context.Books.FirstOrDefaultAsync(b => b.Id == bookId);
 
-            if (existingBook == null)
-            {
-                return null;  // Or handle the case when the book is not found
-            }
-
             // Update the properties of the existing book
             existingBook.Title = updatedBook.Title;
             existingBook.Author = updatedBook.Author;

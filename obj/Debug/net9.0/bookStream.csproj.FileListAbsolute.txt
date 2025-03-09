@@ -230,3 +230,4 @@ C:\Users\beyza\OneDrive\Masaüstü\bookStream\obj\Debug\net9.0\refint\bookStream
 C:\Users\beyza\OneDrive\Masaüstü\bookStream\obj\Debug\net9.0\bookStream.pdb
 C:\Users\beyza\OneDrive\Masaüstü\bookStream\obj\Debug\net9.0\bookStream.genruntimeconfig.cache
 C:\Users\beyza\OneDrive\Masaüstü\bookStream\obj\Debug\net9.0\ref\bookStream.dll
+C:\Users\beyza\OneDrive\Masaüstü\bookStream\obj\Debug\net9.0\bookStream.sourcelink.json
