@@ -11,14 +11,14 @@ using bookStream.Data;
 namespace bookStream.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250309175934_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250410173936_DeletePasswordHash")]
+    partial class DeletePasswordHash
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.7")
+                .HasAnnotation("ProductVersion", "6.0.26")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("bookStream.Models.Book", b =>
@@ -29,8 +29,8 @@ namespace bookStream.Migrations
 
                     b.Property<string>("Author")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasMaxLength(13)
+                        .HasColumnType("varchar(13)");
 
                     b.Property<string>("CoverImage")
                         .IsRequired()
@@ -115,7 +115,7 @@ namespace bookStream.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ProfilePhoto")
                         .HasColumnType("TEXT");

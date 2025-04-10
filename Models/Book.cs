@@ -12,7 +12,11 @@ namespace bookStream.Models
         [Required, MaxLength(255)]
         public string Title { get; set; }
 
-        [Required, MaxLength(255)]
+/*
+        [Required]
+        public int AuthorId { get; set; }*/
+
+        [Required, MaxLength(13)]
         public string Author { get; set; }
 
         [MaxLength(13)]

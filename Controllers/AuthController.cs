@@ -24,7 +24,7 @@ namespace bookStream.Controllers
         private readonly JwtSettings _jwtSettings;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<AuthController> _logger;
-        private readonly PasswordHasher<User> _passwordHasher;
+        private readonly PasswordHasher<User> _passwordHasher; // PasswordHasher sınıfını ekledik
         private readonly EmailSettings _emailSettings;
 
         public AuthController(
@@ -55,8 +55,9 @@ namespace bookStream.Controllers
                 return Unauthorized(Response<object>.ErrorResponse("Invalid credentials or email not verified."));
             }
 
-            var result = _passwordHasher.VerifyHashedPassword(user, user.Password, login.Password);
-            if (result != PasswordVerificationResult.Success)
+            // Hash the provided password and compare it to the stored password hash
+            var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.Password, login.Password);
+            if (passwordVerificationResult != PasswordVerificationResult.Success)
             {
                 _logger.LogWarning("Failed login attempt for user: {Username}", login.Username);
                 return Unauthorized(Response<object>.ErrorResponse("Invalid credentials."));
@@ -79,6 +80,7 @@ namespace bookStream.Controllers
             return Ok(Response<object>.SuccessResponse(new { Token = tokenString }, "Login successful."));
         }
 
+
         [HttpPost("register")]
         public async Task<ActionResult<Response<User>>> Register(User user)
         {
@@ -88,16 +90,22 @@ namespace bookStream.Controllers
             if (await _userRepository.GetUserByEmail(user.Email) != null)
                 return BadRequest(Response<User>.ErrorResponse("Email already registered"));
 
-            user.Password = _passwordHasher.HashPassword(user, user.Password);
+            // Do not hash the password, store it directly
+             var hashedPassword = _passwordHasher.HashPassword(user, user.Password);
+            user.Password = hashedPassword;
+
+            // Generate verification token
             user.Token = GenerateVerificationToken();
             user.IsEmailConfirmed = false;
 
-            string verificationLink = $"https://github.com/byzkaleli";
+            string verificationLink = $"https://github.com/byzkaleli";  // Replace with actual verification link
             SendVerificationEmail(user.Email, verificationLink);
 
             var createdUser = await _userRepository.AddUser(user);
             return Response<User>.SuccessResponse(createdUser, "User registered successfully. Please check your email to verify your account.");
         }
+
+
 
         [HttpGet("confirm-email")]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
@@ -149,6 +157,6 @@ namespace bookStream.Controllers
                 throw;
             }
         }
-
     }
+
 }

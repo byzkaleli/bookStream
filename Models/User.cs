@@ -8,6 +8,7 @@ namespace bookStream.Models
 {
     public class User
     {
+        [JsonIgnore]
         public int Id { get; set; }
 
         [Required]
@@ -23,11 +24,13 @@ namespace bookStream.Models
         [EmailAddress]
         public string Email { get; set; }
 
+        [Column(TypeName = "TEXT")] // Change to TEXT as it stores base64 string
         [Required]
         [MinLength(6)]
-        public string Password { get; set; }
-
+        public string Password { get; set; } = null;
+        [JsonIgnore]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Oluşturma tarihi
+        [JsonIgnore]
         public DateTime? UpdatedAt { get; set; } // Güncelleme tarihi
 
         [Column(TypeName = "TEXT"), JsonIgnore]
