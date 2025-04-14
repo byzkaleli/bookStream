@@ -16,7 +16,10 @@ namespace bookStream.Repositories
         // Tüm türleri getir
         public async Task<List<Book>> GetAllBooks()
         {
-            return await _context.Books.ToListAsync();
+            return await _context.Books
+            .Include(b => b.Author)
+            .Include(b => b.Genre)
+            .ToListAsync();
         }
 
         // Yeni tür ekle

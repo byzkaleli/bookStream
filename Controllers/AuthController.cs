@@ -1,162 +1,145 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using System;
 using System.Net;
 using System.Net.Mail;
-using System.Security.Claims;
-using System.Text;
-using bookStream.Models;
-using bookStream.Configurations;
-using bookStream.Repositories;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
+using bookStream.Configurations;
+using bookStream.Models;
+using bookStream.Repositories;
+using bookStream.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace bookStream.Controllers
-
-//deneme
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly JwtSettings _jwtSettings;
+        private readonly AuthService _authService;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<AuthController> _logger;
-        private readonly PasswordHasher<User> _passwordHasher; // PasswordHasher sınıfını ekledik
         private readonly EmailSettings _emailSettings;
 
         public AuthController(
-            IOptions<JwtSettings> jwtSettings,
+            AuthService authService,
             IUserRepository userRepository,
             ILogger<AuthController> logger,
             IOptions<EmailSettings> emailSettings)
         {
-            _jwtSettings = jwtSettings.Value;
+            _authService = authService;
             _userRepository = userRepository;
             _logger = logger;
-            _passwordHasher = new PasswordHasher<User>();
             _emailSettings = emailSettings.Value;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] Login login)
+        public async Task<IActionResult> Login([FromBody] UserLoginDto login)
         {
             if (login == null || string.IsNullOrEmpty(login.Username) || string.IsNullOrEmpty(login.Password))
             {
                 return BadRequest(Response<object>.ErrorResponse("Username and password are required."));
             }
 
-            var user = await _userRepository.GetUserByUsername(login.Username);
-            if (user == null || !user.IsEmailConfirmed)
+            try
             {
-                _logger.LogWarning("Failed login attempt for user: {Username}", login.Username);
-                return Unauthorized(Response<object>.ErrorResponse("Invalid credentials or email not verified."));
-            }
+                // AuthService üzerinden login işlemi
+                var userProfile = await _authService.LoginAsync(login);
 
-            // Hash the provided password and compare it to the stored password hash
-            var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.Password, login.Password);
-            if (passwordVerificationResult != PasswordVerificationResult.Success)
+                // Token oluşturma
+                var token = _authService.GenerateJwtToken(userProfile.Id.ToString(), userProfile.Email, userProfile.Username);
+                var token = _authService.GenerateJwtToken(userProfile.Id.ToString(), userProfile.Email);
+
+                return Ok(Response<object>.SuccessResponse(new
+                {
+                    Token = token
+                }, "Login successful."));
+            }
+            catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning("Failed login attempt for user: {Username}", login.Username);
-                return Unauthorized(Response<object>.ErrorResponse("Invalid credentials."));
+                _logger.LogWarning(ex, "Login failed for user: {Username}", login.Username);
+                return Unauthorized(Response<object>.ErrorResponse(ex.Message));
             }
-
-            var claims = new[] { new Claim(ClaimTypes.Name, user.Username) };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _jwtSettings.Issuer,
-                audience: _jwtSettings.Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryInMinutes),
-                signingCredentials: creds
-            );
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return Ok(Response<object>.SuccessResponse(new { Token = tokenString }, "Login successful."));
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Login error for user: {Username}", login.Username);
+                return StatusCode(500, Response<object>.ErrorResponse("An error occurred during login."));
+            }
         }
-
 
         [HttpPost("register")]
-        public async Task<ActionResult<Response<User>>> Register(User user)
+        public async Task<IActionResult> Register([FromBody] UserRegisterDto registerDto)
         {
-            if (await _userRepository.GetUserByUsername(user.Username) != null)
-                return BadRequest(Response<User>.ErrorResponse("Username already registered"));
+            try
+            {
+                var user = await _authService.RegisterAsync(registerDto);
+                var verificationLink = $"{Request.Scheme}://{Request.Host}/api/auth/confirm-email?token={user.Token}";
+                //SendVerificationEmail(user.Email, verificationLink);
 
-            if (await _userRepository.GetUserByEmail(user.Email) != null)
-                return BadRequest(Response<User>.ErrorResponse("Email already registered"));
+                user = new User
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Name = user.Name,
+                    Surname = user.Surname,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt,
+                    Role = user.Role,
+                    IsEmailConfirmed = user.IsEmailConfirmed
+                };
 
-            // Do not hash the password, store it directly
-             var hashedPassword = _passwordHasher.HashPassword(user, user.Password);
-            user.Password = hashedPassword;
-
-            // Generate verification token
-            user.Token = GenerateVerificationToken();
-            user.IsEmailConfirmed = false;
-
-            string verificationLink = $"https://github.com/byzkaleli";  // Replace with actual verification link
-            SendVerificationEmail(user.Email, verificationLink);
-
-            var createdUser = await _userRepository.AddUser(user);
-            return Response<User>.SuccessResponse(createdUser, "User registered successfully. Please check your email to verify your account.");
+                return Ok(Response<User>.SuccessResponse(user, "Registration successful. Please check your email."));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Registration failed");
+                return BadRequest(Response<object>.ErrorResponse(ex.Message));
+            }
         }
-
-
 
         [HttpGet("confirm-email")]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
         {
-            var user = await _userRepository.GetUserByToken(token);
-            if (user == null)
+            try
             {
-                return BadRequest(Response<object>.ErrorResponse("Invalid verification token."));
+                await _authService.VerifyEmailAsync(token);
+                return Ok(Response<object>.SuccessResponse(null, "Email verified successfully"));
             }
-
-            user.IsEmailConfirmed = true;
-            user.Token = null;
-            await _userRepository.UpdateUser(user);
-
-            return Ok(Response<object>.SuccessResponse(null, "Email successfully verified."));
-        }
-
-        private string GenerateVerificationToken()
-        {
-            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Email verification failed");
+                return BadRequest(Response<object>.ErrorResponse(ex.Message));
+            }
         }
 
         private void SendVerificationEmail(string email, string verificationLink)
         {
             try
             {
-                var smtpClient = new SmtpClient("smtp.gmail.com")
+                using var smtpClient = new SmtpClient(_emailSettings.SmtpServer)
                 {
-                    Port = 587, // TLS için 587, SSL için 465
-                    Credentials = new NetworkCredential("bookstream1982@gmail.com", "tkev jqql bcqq qtqy"),
-                    EnableSsl = true // TLS kullanımı için true
+                    Port = _emailSettings.Port,
+                    Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password),
+                    EnableSsl = _emailSettings.UseSsl
                 };
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress("bookstream1982@gmail.com"),
+                    From = new MailAddress(_emailSettings.FromAddress),
                     Subject = "Email Verification",
-                    Body = $"Click the link to verify your email: <a href='{verificationLink}'>Verify</a>",
+                    Body = $"Please verify your email by clicking this link: <a href='{verificationLink}'>{verificationLink}</a>",
                     IsBodyHtml = true
                 };
 
                 mailMessage.To.Add(email);
                 smtpClient.Send(mailMessage);
-                Console.WriteLine($"Verification email sent to {email}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Email sending failed: {ex.Message}");
+                _logger.LogError(ex, "Failed to send verification email");
                 throw;
             }
         }
     }
-
 }

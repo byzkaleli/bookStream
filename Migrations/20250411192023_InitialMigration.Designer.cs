@@ -11,8 +11,8 @@ using bookStream.Data;
 namespace bookStream.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250410173936_DeletePasswordHash")]
-    partial class DeletePasswordHash
+    [Migration("20250411192023_InitialMigration")]
+    partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -21,26 +21,52 @@ namespace bookStream.Migrations
                 .HasAnnotation("ProductVersion", "6.0.26")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("bookStream.Models.Author", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Photo")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Authors");
+                });
+
             modelBuilder.Entity("bookStream.Models.Book", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Author")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("varchar(13)");
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
 
                     b.Property<string>("CoverImage")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("GenreId")
@@ -58,7 +84,6 @@ namespace bookStream.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Publisher")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
@@ -71,6 +96,8 @@ namespace bookStream.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
 
                     b.HasIndex("GenreId");
 
@@ -93,7 +120,7 @@ namespace bookStream.Migrations
                     b.ToTable("Genres");
                 });
 
-            modelBuilder.Entity("bookStream.Models.User", b =>
+            modelBuilder.Entity("bookStream.Models.UserRegisterDto", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -216,11 +243,19 @@ namespace bookStream.Migrations
 
             modelBuilder.Entity("bookStream.Models.Book", b =>
                 {
+                    b.HasOne("bookStream.Models.Author", "Author")
+                        .WithMany("Books")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("bookStream.Models.Genre", "Genre")
                         .WithMany("Books")
                         .HasForeignKey("GenreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Author");
 
                     b.Navigation("Genre");
                 });
@@ -239,7 +274,7 @@ namespace bookStream.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("bookStream.Models.User", "User")
+                    b.HasOne("bookStream.Models.UserRegisterDto", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -260,7 +295,7 @@ namespace bookStream.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("bookStream.Models.User", "User")
+                    b.HasOne("bookStream.Models.UserRegisterDto", "User")
                         .WithMany("PostLikes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -269,6 +304,11 @@ namespace bookStream.Migrations
                     b.Navigation("Post");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("bookStream.Models.Author", b =>
+                {
+                    b.Navigation("Books");
                 });
 
             modelBuilder.Entity("bookStream.Models.Book", b =>
@@ -281,7 +321,7 @@ namespace bookStream.Migrations
                     b.Navigation("Books");
                 });
 
-            modelBuilder.Entity("bookStream.Models.User", b =>
+            modelBuilder.Entity("bookStream.Models.UserRegisterDto", b =>
                 {
                     b.Navigation("PostLikes");
 

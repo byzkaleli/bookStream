@@ -16,23 +16,22 @@ namespace bookStream.Services
 
         public void SendVerificationEmail(string email, string verificationLink)
         {
-            var smtpClient = new SmtpClient(_emailSettings.SmtpServer)
+            using var smtpClient = new SmtpClient(_emailSettings.SmtpServer)
             {
-                Port = _emailSettings.SmtpPort,
-                Credentials = new NetworkCredential(_emailSettings.SenderEmail, _emailSettings.SenderPassword),
-                EnableSsl = true
+                Port = _emailSettings.Port,
+                Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password),
+                EnableSsl = _emailSettings.UseSsl
             };
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(_emailSettings.SenderEmail),
+                From = new MailAddress(_emailSettings.FromAddress),
                 Subject = "Verify Your Email",
                 Body = $"<h1>Email Verification</h1><p>Click the link below to verify your email:</p><a href='{verificationLink}'>Verify Email</a>",
                 IsBodyHtml = true
             };
 
             mailMessage.To.Add(email);
-
             smtpClient.Send(mailMessage);
         }
     }

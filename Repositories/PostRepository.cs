@@ -19,48 +19,58 @@ namespace bookStream.Repositories
         public async Task<Post> GetPostById(int id)
         {
             return await _context.Posts
-                                 .Include(p => p.PostLikes)
                                  .Include(p => p.User)
                                  .Include(p => p.Book)
                                  .Include(p => p.Type)
                                  .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<IEnumerable<Post>> GetPost()
+        public async Task<List<Post>> GetPost()
         {
             return await _context.Posts
-                                 .Include(p => p.PostLikes)
                                  .Include(p => p.User)
                                  .Include(p => p.Book)
                                  .Include(p => p.Type)
                                  .ToListAsync();
         }
 
-        public async Task<Post> AddPost(Post post)
+        public async Task<Post> AddPost(PostDto postDto)
         {
-            var user = await _context.Users.FindAsync(post.UserId);
+            var user = await _context.Users.FindAsync(postDto.UserId);
             if (user == null)
             {
                 throw new Exception("Geçersiz UserId.");
             }
-            post.User = user;
 
-            var book = await _context.Books.FindAsync(post.BookId);
+            var book = await _context.Books.FindAsync(postDto.BookId);
             if (book == null)
             {
                 throw new Exception("Geçersiz BookId.");
             }
-            post.Book = book;
 
-            var type = await _context.PostTypes.FindAsync(post.TypeId);
+            var type = await _context.PostTypes.FindAsync(postDto.TypeId);
             if (type == null)
             {
                 throw new Exception("Geçersiz TypeId.");
             }
-            post.Type = type;
+
+            var post = new Post
+            {
+                UserId = postDto.UserId,
+                BookId = postDto.BookId,
+                TypeId = postDto.TypeId,
+                Text = postDto.Text,
+                CreateDate = DateTime.UtcNow
+            };
 
             _context.Posts.Add(post);
             await _context.SaveChangesAsync();
+
+            // İlişkili verileri geri döndürmek istersen:
+            post.User = user;
+            post.Book = book;
+            post.Type = type;
+
             return post;
         }
 
@@ -79,6 +89,26 @@ namespace bookStream.Repositories
                 _context.Posts.Remove(post);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<List<Post>> GetPostsByUserIdAndTypeId(int userId, int typeId)
+        {
+            return await _context.Posts
+                                 .Where(p => p.UserId == userId && p.TypeId == typeId)
+                                 .Include(p => p.User)
+                                 .Include(p => p.Book)
+                                 .Include(p => p.Type)
+                                 .ToListAsync();
+        }
+
+        public async Task<List<Post>> GetPostsByBookIdAndTypeId(int bookId, int typeId)
+        {
+            return await _context.Posts
+                                 .Where(p => p.BookId == bookId && p.TypeId == typeId)
+                                 .Include(p => p.User)
+                                 .Include(p => p.Book)
+                                 .Include(p => p.Type)
+                                 .ToListAsync();
         }
     }
 }

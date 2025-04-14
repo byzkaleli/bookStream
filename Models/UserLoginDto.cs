@@ -1,6 +1,6 @@
 namespace bookStream.Models
 {
-    public class Login
+    public class UserLoginDto
     {
         public string Username { get; set; }
         public string Password { get; set; }

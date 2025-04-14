@@ -29,6 +29,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -39,14 +40,33 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
         };
+
+        // Hata ayıklama için event
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Headers.ContainsKey("Authorization"))
+                {
+                    var authorization = context.Request.Headers["Authorization"].ToString();
+                    if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // "Bearer " ekle
+                        context.Request.Headers["Authorization"] = "Bearer " + authorization;
+                    }
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
+
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
-
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 
 builder.Services.AddCors(options =>
 {

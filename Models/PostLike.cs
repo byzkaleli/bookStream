@@ -11,12 +11,12 @@ public class PostLike
     [Required]
     public int PostId { get; set; }
     
-    [ForeignKey("PostId"), JsonIgnore]
-    public Post? Post { get; set; } // İlişki
+    [ForeignKey("PostId")]
+    public Post? Post { get; set; }
 
     [Required]
     public int UserId { get; set; }
 
-    [ForeignKey("UserId"), JsonIgnore]
-    public User? User { get; set; } // İlişki
+    [ForeignKey("UserId")]
+    public User? User { get; set; }
 }

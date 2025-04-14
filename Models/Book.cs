@@ -12,12 +12,10 @@ namespace bookStream.Models
         [Required, MaxLength(255)]
         public string Title { get; set; }
 
-/*
         [Required]
-        public int AuthorId { get; set; }*/
+        public int AuthorId { get; set; }
 
-        [Required, MaxLength(13)]
-        public string Author { get; set; }
+        public Author? Author { get; set; }
 
         [MaxLength(13)]
         public string ISBN { get; set; }
@@ -27,25 +25,22 @@ namespace bookStream.Models
         public int PageCount { get; set; }
 
         [MaxLength(255)]
-        public string Publisher { get; set; }
+        public string? Publisher { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Column(TypeName = "TEXT")]
-        public string CoverImage { get; set; }
+        public string? CoverImage { get; set; }
 
-        [JsonIgnore]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
-        [JsonIgnore]
         public DateTime? UpdatedAt { get; set; }
 
         [Required]
         public int GenreId { get; set; }
 
-        [JsonIgnore]
         public Genre? Genre { get; set; }
-        
+
         [JsonIgnore]
         public ICollection<Post>? Posts { get; set; }
     }

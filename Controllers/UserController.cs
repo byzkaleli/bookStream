@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using bookStream.Models;
 using bookStream.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
@@ -50,4 +50,34 @@ public class UserController : ControllerBase
 
         return Ok(Response<string>.SuccessResponse("User deleted successfully"));
     }
+
+    [Authorize]
+    [HttpGet("profile")]
+    public async Task<ActionResult<Response<UserProfileDto>>> GetProfile()
+    {
+        var username = User.Identity?.Name;
+        if (string.IsNullOrEmpty(username))
+            return Unauthorized(Response<UserProfileDto>.ErrorResponse("User not authenticated."));
+
+        var user = await _userRepository.GetUserByUsername(username);
+        if (user == null)
+            return NotFound(Response<UserProfileDto>.ErrorResponse("User not found."));
+
+        var userProfile = new UserProfileDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Name = user.Name,
+            Surname = user.Surname,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt,
+            ProfilePhoto = user.ProfilePhoto,
+            Role = user.Role,
+            IsEmailConfirmed = user.IsEmailConfirmed
+        };
+
+        return Ok(Response<UserProfileDto>.SuccessResponse(userProfile));
+    }
+
 }

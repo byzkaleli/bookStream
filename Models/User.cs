@@ -8,48 +8,44 @@ namespace bookStream.Models
 {
     public class User
     {
-        [JsonIgnore]
+        [Key]
         public int Id { get; set; }
 
         [Required]
+        [StringLength(50, MinimumLength = 3)]
         public string Username { get; set; }
 
         [Required]
+        [StringLength(100)]
         public string Name { get; set; }
 
         [Required]
-        public string Surname { get; set; } // Soyisim
+        [StringLength(100)]
+        public string Surname { get; set; }
 
         [Required]
         [EmailAddress]
+        [StringLength(100)]
         public string Email { get; set; }
 
-        [Column(TypeName = "TEXT")] // Change to TEXT as it stores base64 string
+        [Column(TypeName = "TEXT")]
         [Required]
-        [MinLength(6)]
-        public string Password { get; set; } = null;
+        [StringLength(200, MinimumLength = 8)]
         [JsonIgnore]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Oluşturma tarihi
-        [JsonIgnore]
-        public DateTime? UpdatedAt { get; set; } // Güncelleme tarihi
+        public string Password { get; set; }
 
-        [Column(TypeName = "TEXT"), JsonIgnore]
-        public string? ProfilePhoto { get; set; } // Profil fotoğrafı
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
-        [JsonIgnore]
+        [Column(TypeName = "TEXT")]
+        public string? ProfilePhoto { get; set; }
+
         public string Role { get; set; } = "User";
-
-        [JsonIgnore]
-        public bool IsEmailConfirmed { get; set; } = false; // E-posta doğrulama durumu
-        
-
-        // E-posta doğrulama için kullanılan token
-        [JsonIgnore]
+        public bool IsEmailConfirmed { get; set; } = false;
         public string? Token { get; set; }
-        
+
         [JsonIgnore]
         public ICollection<Post>? Posts { get; set; }
-
         [JsonIgnore]
         public ICollection<PostLike>? PostLikes { get; set; }
     }

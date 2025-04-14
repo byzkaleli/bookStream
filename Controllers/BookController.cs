@@ -41,12 +41,48 @@ namespace bookStream.Controllers
 
         // Add a new book
         [HttpPost]
-        public async Task<ActionResult<Response<Book>>> AddBook([FromBody] Book book)
+        public async Task<ActionResult<Response<BookDto>>> AddBook([FromBody] BookDto bookDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(Response<string>.ErrorResponse("Geçersiz veri girdisi."));
+            }
+
+            // BookDto -> Book dönüşümü
+            var book = new Book
+            {
+                Title = bookDto.Title,
+                AuthorId = bookDto.AuthorId,
+                ISBN = bookDto.ISBN,
+                PublishedYear = bookDto.PublishedYear,
+                PageCount = bookDto.PageCount,
+                Publisher = bookDto.Publisher,
+                Description = bookDto.Description,
+                CoverImage = bookDto.CoverImage,
+                GenreId = bookDto.GenreId,
+                CreatedAt = DateTime.UtcNow
+            };
+
             var addedBook = await _bookRepository.AddBook(book);
-            var successResponse = Response<Book>.SuccessResponse(addedBook, "Kitap başarıyla eklendi.");
+
+            // Geriye BookDto döneceksen dönüşüm yap
+            var resultDto = new BookDto
+            {
+                Title = addedBook.Title,
+                AuthorId = addedBook.AuthorId,
+                ISBN = addedBook.ISBN,
+                PublishedYear = addedBook.PublishedYear,
+                PageCount = addedBook.PageCount,
+                Publisher = addedBook.Publisher,
+                Description = addedBook.Description,
+                CoverImage = addedBook.CoverImage,
+                GenreId = addedBook.GenreId
+            };
+
+            var successResponse = Response<BookDto>.SuccessResponse(resultDto, "Kitap başarıyla eklendi.");
             return CreatedAtAction(nameof(GetBookById), new { id = addedBook.Id }, successResponse);
         }
+
 
         // Update an existing book
         [HttpPut("{id}")]

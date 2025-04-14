@@ -1,6 +1,10 @@
-using Microsoft.EntityFrameworkCore;
-using bookStream.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using bookStream.Data;
+using bookStream.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace bookStream.Repositories
 {
@@ -47,7 +51,7 @@ namespace bookStream.Repositories
 
         public async Task<bool> UpdateUser(User user)
         {
-            _context.Users.Update(user);
+            _context.Entry(user).State = EntityState.Modified;
             return await _context.SaveChangesAsync() > 0;
         }
 
@@ -58,6 +62,11 @@ namespace bookStream.Repositories
 
             _context.Users.Remove(user);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        private bool UserExists(int id)
+        {
+            return _context.Users.Any(e => e.Id == id);
         }
     }
 }

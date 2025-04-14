@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 public class PostType
 {
@@ -8,5 +9,6 @@ public class PostType
     [Required, MaxLength(50)]
     public string Name { get; set; }
 
+    [JsonIgnore]
     public ICollection<Post> Posts { get; set; } // Post'lar ile ilişki
 }

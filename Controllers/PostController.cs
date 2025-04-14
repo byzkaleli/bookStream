@@ -19,11 +19,26 @@ namespace bookStream.Controllers
 
         // GET: api/Post
         [HttpGet]
-        public async Task<ActionResult<Response<IEnumerable<Post>>>> GetPosts()
+        public async Task<ActionResult<Response<List<Post>>>> GetPosts()
         {
-            var posts = await _postRepository.GetPost();
-            return Ok(Response<IEnumerable<Post>>.SuccessResponse(posts));
+            try
+            {
+                var posts = await _postRepository.GetPost();
+
+                if (posts == null || !posts.Any())
+                {
+                    return NotFound(Response<List<Post>>.ErrorResponse("Gönderi bulunamadı!"));
+                }
+
+                var successResponse = Response<List<Post>>.SuccessResponse(posts, "Gönderiler başarıyla listelendi.");
+                return Ok(successResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Response<List<Post>>.ErrorResponse("Sunucu hatası"));
+            }
         }
+
 
         // GET: api/Post/5
         [HttpGet("{id}")]
@@ -39,11 +54,20 @@ namespace bookStream.Controllers
 
         // POST: api/Post
         [HttpPost]
-        public async Task<ActionResult<Response<Post>>> PostPost(Post post)
+        public async Task<ActionResult<Response<Post>>> PostPost(PostDto postDto)
         {
-            var createdPost = await _postRepository.AddPost(post);
-            return CreatedAtAction(nameof(GetPost), new { id = createdPost.Id }, Response<Post>.SuccessResponse(createdPost, "Post created successfully"));
+            try
+            {
+                var createdPost = await _postRepository.AddPost(postDto);
+                return CreatedAtAction(nameof(GetPost), new { id = createdPost.Id },
+                    Response<Post>.SuccessResponse(createdPost, "Post created successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(Response<Post>.ErrorResponse($"Post oluşturulurken hata oluştu: {ex.Message}"));
+            }
         }
+
 
         // PUT: api/Post/5
         [HttpPut("{id}")]
@@ -70,6 +94,58 @@ namespace bookStream.Controllers
 
             await _postRepository.DeletePost(id);
             return Ok(Response<string>.SuccessResponse("Gönderi başarıyla silindi."));
+        }
+
+        [HttpGet("byUserId/alinti")]
+        public async Task<ActionResult<Response<List<Post>>>> GetPostsByUserIdAlinti(int userId)
+        {
+            var posts = await _postRepository.GetPostsByUserIdAndTypeId(userId, 1);
+
+            if (posts == null || posts.Count == 0)
+            {
+                return NotFound(Response<string>.ErrorResponse("No Alinti found for the given userId and typeId."));
+            }
+
+            return Ok(Response<List<Post>>.SuccessResponse(posts, "Posts fetched successfully."));
+        }
+        
+        [HttpGet("byUserId/ozet")]
+        public async Task<ActionResult<Response<List<Post>>>> GetPostsByUserIdOzet(int userId)
+        {
+            var posts = await _postRepository.GetPostsByUserIdAndTypeId(userId, 2);
+
+            if (posts == null || posts.Count == 0)
+            {
+                return NotFound(Response<string>.ErrorResponse("No Ozet found for the given userId and typeId."));
+            }
+
+            return Ok(Response<List<Post>>.SuccessResponse(posts, "Posts fetched successfully."));
+        }
+
+        [HttpGet("byBookId/alinti")]
+        public async Task<ActionResult<Response<List<Post>>>> GetPostsByBookIdAlinti(int bookId)
+        {
+            var posts = await _postRepository.GetPostsByBookIdAndTypeId(bookId, 1);
+
+            if (posts == null || posts.Count == 0)
+            {
+                return NotFound(Response<string>.ErrorResponse("No Alinti found for the given bookId and typeId."));
+            }
+
+            return Ok(Response<List<Post>>.SuccessResponse(posts, "Posts fetched successfully."));
+        }
+
+        [HttpGet("byBookId/ozet")]
+        public async Task<ActionResult<Response<List<Post>>>> GetPostsByBookIdOzet(int bookId)
+        {
+            var posts = await _postRepository.GetPostsByBookIdAndTypeId(bookId, 2);
+
+            if (posts == null || posts.Count == 0)
+            {
+                return NotFound(Response<string>.ErrorResponse("No Ozet found for the given bookId and typeId."));
+            }
+
+            return Ok(Response<List<Post>>.SuccessResponse(posts, "Posts fetched successfully."));
         }
     }
 }

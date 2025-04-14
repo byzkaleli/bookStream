@@ -14,6 +14,8 @@ namespace bookStream.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<PostType> PostTypes { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
+        public DbSet<Author> Authors { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

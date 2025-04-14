@@ -1,3 +1,4 @@
+using bookStream.DTOs;
 using bookStream.Models;
 using bookStream.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -17,20 +18,23 @@ namespace bookStream.Controllers
 
         // Tür ekleme (POST)
         [HttpPost]
-        public async Task<IActionResult> AddGenre([FromBody] Genre genre)
+        public async Task<IActionResult> AddGenre([FromBody] GenreDto genreDto)
         {
-            if (genre == null || string.IsNullOrEmpty(genre.Name))
+            if (genreDto == null || string.IsNullOrEmpty(genreDto.Name))
             {
-                // Hata durumu için Response kullanımı
                 var errorResponse = Response<Genre>.ErrorResponse("Tür adı gereklidir.");
-                return BadRequest(errorResponse); // 400 Bad Request
+                return BadRequest(errorResponse);
             }
+
+            var genre = new Genre
+            {
+                Name = genreDto.Name
+            };
 
             var addedGenre = await _genreRepository.AddGenre(genre);
 
-            // Başarılı yanıt için Response kullanımı
             var successResponse = Response<Genre>.SuccessResponse(addedGenre, "Tür başarıyla eklendi.");
-            return CreatedAtAction(nameof(GetGenreById), new { id = addedGenre.Id }, successResponse); // 201 Created
+            return CreatedAtAction(nameof(GetGenreById), new { id = addedGenre.Id }, successResponse);
         }
 
         // Tür silme (DELETE)

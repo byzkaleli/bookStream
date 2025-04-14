@@ -11,25 +11,24 @@ public class Post
     [Required]
     public int UserId { get; set; }
 
-    [ForeignKey("UserId"), JsonIgnore]
-    public User? User { get; set; } // Kullanıcı ilişkisi
+    [ForeignKey("UserId")]
+    public User? User { get; set; }
 
     [Required]
     public int BookId { get; set; }
 
-    [ForeignKey("BookId"), JsonIgnore]
-    public Book? Book { get; set; } // Kitap ilişkisi
+    [ForeignKey("BookId")]
+    public Book? Book { get; set; }
 
     [Required]
     public int TypeId { get; set; }
 
-    [ForeignKey("TypeId"), JsonIgnore]
-    public PostType? Type { get; set; } // Post tipi ilişkisi
+    [ForeignKey("TypeId")]
+    public PostType? Type { get; set; }
 
     [MaxLength(1000)]
     public string Text { get; set; }
 
-    [JsonIgnore]
     public DateTime CreateDate { get; set; } = DateTime.UtcNow;
 
     // Post-PostLike ilişkisi

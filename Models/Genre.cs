@@ -12,6 +12,6 @@ namespace bookStream.Models
         public string Name { get; set; }
 
         [JsonIgnore]
-        public List<Book> Books { get; set; } = new List<Book>();
+        public List<Book> Books { get; set; }
     }
 }

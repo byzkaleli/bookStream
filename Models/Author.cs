@@ -16,12 +16,10 @@ namespace bookStream.Models
         public string LastName { get; set; }
 
         [Column(TypeName = "TEXT")]
-        public string? PhotoUrl { get; set; }
+        public string? Photo { get; set; }
 
-        [JsonIgnore]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [JsonIgnore]
         public DateTime? UpdatedAt { get; set; }
 
         [JsonIgnore]
